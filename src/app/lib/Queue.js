@@ -22,5 +22,20 @@ export default {
                 console.log(queue.key, job.data)
             })
         })
+    },
+    async checkHealth(){
+        const HEALTH_CHECK_TIMEOUT_MS = 2000;
+
+        const ping = queue => Promise.race([
+            queue.bull.client.ping(),
+            new Promise((resolve, reject) => setTimeout(() => reject(new Error('health check timeout')), HEALTH_CHECK_TIMEOUT_MS))
+        ]);
+
+        try {
+            await Promise.all(this.queues.map(ping));
+            return true;
+        } catch (error) {
+            return false;
+        }
     }
 };
