@@ -15,6 +15,12 @@ export default {
         const queue = this.queues.find(queue => queue.name == name);
         return queue.bull.add(data);
     },
+    async retryFailed(name){
+        const queue = this.queues.find(queue => queue.name == name);
+        const failedJobs = await queue.bull.getFailed();
+        await Promise.all(failedJobs.map(job => job.retry()));
+        return failedJobs.length;
+    },
     process(){
         return this.queues.forEach(queue => {
             queue.bull.process(queue.handle);
