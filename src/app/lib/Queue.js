@@ -13,7 +13,13 @@ export default {
     queues,
     add(name, data){
         const queue = this.queues.find(queue => queue.name == name);
-        return queue.bull.add(data);
+        return queue.bull.add(data, {
+            attempts: 4,
+            backoff: {
+                type: 'exponential',
+                delay: 1000
+            }
+        });
     },
     process(){
         return this.queues.forEach(queue => {
