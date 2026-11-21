@@ -6,8 +6,18 @@ import * as jobs from '../jobs';
 const queues = Object.values(jobs).map(job => ({
     bull: new Queue(job.key, redisConfig),
     name: job.key,
-    handle: job.handle
+    handle: job.handle,
+    metrics: { completed: 0, failed: 0 }
 }))
+
+queues.forEach(queue => {
+    queue.bull.on('global:completed', () => {
+        queue.metrics.completed += 1;
+    });
+    queue.bull.on('global:failed', () => {
+        queue.metrics.failed += 1;
+    });
+});
 
 export default {
     queues,
@@ -22,5 +32,12 @@ export default {
                 console.log(queue.key, job.data)
             })
         })
+    },
+    getMetrics(){
+        return this.queues.map(queue => ({
+            fila: queue.name,
+            concluidos: queue.metrics.completed,
+            falhos: queue.metrics.failed
+        }))
     }
 };
